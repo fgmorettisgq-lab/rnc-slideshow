@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang='pt-br'>
 <head>
-<meta charset="UTF-8">
+<meta charset='UTF-8'>
 <title>RNC Slideshow</title>
+
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -62,34 +63,36 @@
 
 <body>
 
-<div id="rnc-slideshow">
-  <div id="slide-card">
-    <div id="image-wrap">
-      <img id="slide-image" src="" alt="Imagem RNC">
+<div id='rnc-slideshow'>
+  <div id='slide-card'>
+    <div id='image-wrap'>
+      <img id='slide-image' src='' alt='Imagem RNC'>
     </div>
 
-    <div style="flex:1; min-width:260px;">
-      <h3 id="titulo" style="margin:0 0 8px 0; font-size:20px;"></h3>
-      <div style="font-size:14px; color:#333; line-height:1.4;">
-        <p><strong>Origem:</strong> <span id="origem"></span></p>
-        <p><strong>Responsável (apontamento):</strong> <span id="resp_apontamento"></span></p>
-        <p><strong>Responsável (plano de ação):</strong> <span id="resp_plano"></span></p>
-        <p><strong>Prazo (dias):</strong> <span id="prazo"></span></p>
+    <div style='flex:1; min-width:260px;'>
+      <h3 id='titulo' style='margin:0 0 8px 0; font-size:20px;'></h3>
+
+      <div style='font-size:14px; color:#333; line-height:1.4;'>
+        <p><strong>Origem:</strong> <span id='origem'></span></p>
+        <p><strong>Responsável (apontamento):</strong> <span id='resp_apontamento'></span></p>
+        <p><strong>Responsável (plano de ação):</strong> <span id='resp_plano'></span></p>
+        <p><strong>Prazo (dias):</strong> <span id='prazo'></span></p>
       </div>
     </div>
   </div>
 
-  <div id="controls">
-    <button id="prevBtn">Anterior</button>
-    <div id="counter" style="font-size:14px;color:#555;"></div>
-    <button id="nextBtn">Próximo</button>
+  <div id='controls'>
+    <button id='prevBtn'>Anterior</button>
+    <div id='counter' style='font-size:14px;color:#555;'></div>
+    <button id='nextBtn'>Próximo</button>
   </div>
 </div>
 
 <script>
+
 (function(){
 
-  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTsXEYtBupLJfZ7aBF6bmnNYhENOJqnh4uaTPhA__e1qRomxKDO8L_WUx2oi1-IGwM9rkIn7_U-8bUj/pub?output=csv";
+  const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsXEYtBupLJfZ7aBF6bmnNYhENOJqnh4uaTPhA__e1qRomxKDO8L_WUx2oi1-IGwM9rkIn7_U-8bUj/pub?output=csv';
   const INTERVAL_MS = 10000;
 
   let records = [];
@@ -107,30 +110,30 @@
   const nextBtn = document.getElementById('nextBtn');
 
   function driveUrlToDirect(url){
-    if(!url) return "";
+    if(!url) return '';
     const match = url.match(/[-\w]{25,}/);
     if(match){
-      return "https://drive.google.com/uc?export=view&id=" + match[0];
+      return 'https://drive.google.com/uc?export=view&id=' + match[0];
     }
     return url;
   }
 
   function parseCSVLine(line) {
     const parts = [];
-    let current = "";
+    let current = '';
     let insideQuotes = false;
 
     for (let i = 0; i < line.length; i++) {
       const c = line[i];
 
-      if (c === '"' && line[i+1] === '"') {
-        current += '"';
+      if (c === "'" && line[i+1] === "'") {
+        current += "'";
         i++;
-      } else if (c === '"') {
+      } else if (c === "'") {
         insideQuotes = !insideQuotes;
-      } else if (c === "," && !insideQuotes) {
+      } else if (c === ',' && !insideQuotes) {
         parts.push(current);
-        current = "";
+        current = '';
       } else {
         current += c;
       }
@@ -139,40 +142,53 @@
     return parts;
   }
 
+  function cleanCell(value){
+      if(!value) return '';
+      let v = value.trim();
+
+      v = v.replace(/^'+|'+$/g, '');
+      v = v.split(/\s|,|;/)[0];
+
+      return v.trim();
+  }
+
   function loadCSV(){
     fetch(CSV_URL)
       .then(r => r.text())
       .then(text => {
 
-        const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
-        const headers = parseCSVLine(lines[0]);
+        const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+        const headers = lines[0].split(',');
 
-        const colImg = headers.findIndex(h => h.toLowerCase().includes("link"));
-        const colTitulo = headers.findIndex(h => h.toLowerCase().includes("titulo"));
-        const colOrigem = headers.findIndex(h => h.toLowerCase().includes("origem"));
-        const colRespAp = headers.findIndex(h => h.toLowerCase().includes("apontamento"));
-        const colRespPlano = headers.findIndex(h => h.toLowerCase().includes("plano"));
-        const colPrazo = headers.findIndex(h => h.toLowerCase().includes("prazo"));
+        const colImg = headers.findIndex(h => h.toLowerCase().includes('link'));
+        const colTitulo = headers.findIndex(h => h.toLowerCase().includes('titulo'));
+        const colOrigem = headers.findIndex(h => h.toLowerCase().includes('origem'));
+        const colRespAp = headers.findIndex(h => h.toLowerCase().includes('apontamento'));
+        const colRespPlano = headers.findIndex(h => h.toLowerCase().includes('plano'));
+        const colPrazo = headers.findIndex(h => h.toLowerCase().includes('prazo'));
 
         records = lines.slice(1).map(line => {
-          const parts = parseCSVLine(line);
+          const parts = line.split(',');
+
+          const rawImg = cleanCell(parts[colImg] || '');
+          const imagemFinal = driveUrlToDirect(rawImg);
 
           return {
-            imagem: driveUrlToDirect(parts[colImg] || ""),
-            titulo: parts[colTitulo] || "",
-            origem: parts[colOrigem] || "",
-            resp_apontamento: parts[colRespAp] || "",
-            resp_plano: parts[colRespPlano] || "",
-            prazo: parts[colPrazo] || ""
+            imagem: imagemFinal,
+            titulo: cleanCell(parts[colTitulo] || ''),
+            origem: cleanCell(parts[colOrigem] || ''),
+            resp_apontamento: cleanCell(parts[colRespAp] || ''),
+            resp_plano: cleanCell(parts[colRespPlano] || ''),
+            prazo: cleanCell(parts[colPrazo] || '')
           };
-        }).filter(r => r.titulo || r.imagem);
+        }).filter(r => r.imagem !== '');
 
         idx = 0;
         renderSlide(idx);
         startAuto();
       })
       .catch(err => {
-        console.error("Erro CSV:", err);
+        console.log('Erro CSV:', err);
       });
   }
 
@@ -190,12 +206,13 @@
     respApEl.textContent = r.resp_apontamento;
     respPlanoEl.textContent = r.resp_plano;
     prazoEl.textContent = r.prazo;
-    counterEl.textContent = (idx+1) + " / " + records.length;
+    counterEl.textContent = (idx+1) + ' / ' + records.length;
   }
 
   function nextSlide(){
     renderSlide(idx + 1);
   }
+
   function prevSlide(){
     renderSlide(idx - 1);
   }
@@ -209,8 +226,8 @@
     if(timer) clearInterval(timer);
   }
 
-  nextBtn.addEventListener("click", () => { nextSlide(); startAuto(); });
-  prevBtn.addEventListener("click", () => { prevSlide(); startAuto(); });
+  nextBtn.addEventListener('click', () => { nextSlide(); startAuto(); });
+  prevBtn.addEventListener('click', () => { prevSlide(); startAuto(); });
 
   loadCSV();
 
@@ -219,3 +236,4 @@
 
 </body>
 </html>
+
