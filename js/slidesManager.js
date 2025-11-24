@@ -46,12 +46,12 @@ class SlidesManager {
         
         slide.innerHTML = `
             <!-- Imagem: 65% do espaço -->
-            <div class="w-full h-[65%] rounded-xl sm:rounded-2xl overflow-hidden bg-white bg-opacity-15 backdrop-blur-md border-2 sm:border-4 border-white border-opacity-30 flex items-center justify-center">
+            <div class="w-full h-[50%] rounded-xl sm:rounded-2xl overflow-hidden bg-white bg-opacity-15 backdrop-blur-md border-2 sm:border-4 border-white border-opacity-30 flex items-center justify-center">
                 ${imageHTML}
             </div>
             
             <!-- Informações: 35% do espaço -->
-            <div class="w-full h-[35%] text-white flex flex-col justify-start overflow-y-auto">
+            <div class="w-full h-[50%] text-white flex flex-col justify-start overflow-y-auto">
                 <div class="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-4xl xl:text-5xl 2xl:text-6xl 4k:text-8xl font-bold mb-3 sm:mb-4 md:mb-5 lg:mb-4 xl:mb-5 2xl:mb-6 4k:mb-8 drop-shadow-lg leading-tight">${obra.titulo}</div>
                 <div class="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:gap-3 xl:gap-4 2xl:gap-5 4k:gap-6 flex-1">
                     <div class="bg-white bg-opacity-25 backdrop-blur-md p-3 sm:p-4 md:p-5 lg:p-4 xl:p-5 2xl:p-6 4k:p-8 rounded-lg sm:rounded-xl border-2 border-white border-opacity-40">
