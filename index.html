@@ -4,104 +4,1272 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Não Conformidades</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    screens: {
-                        'xs': '320px',
-                        '4k': '3840px',
-                    }
-                }
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1920px;
+            margin: 0 auto;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 4em;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 2em;
+            padding: 50px;
+        }
+
+        .charts-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            flex: 0 0 auto;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            margin-top: 30px;
+        }
+
+        .chart-wrapper {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            min-height: 350px;
+        }
+
+        .chart-title {
+            text-align: center;
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .slides-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+
+        .slides-container {
+            position: relative;
+            height: 100%;
+            min-height: 700px;
+            overflow: hidden;
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.8s ease-in-out;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 50px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+            z-index: 2;
+        }
+
+        .slide.prev {
+            transform: translateX(-100%);
+        }
+
+        .slide-image {
+            flex: 1;
+            height: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(15px);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            min-height: 500px;
+        }
+
+        .slide-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .slide-image-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            padding: 40px;
+        }
+
+        .slide-image-placeholder svg {
+            opacity: 0.6;
+            margin-bottom: 20px;
+        }
+
+        .slide-image-placeholder div {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .slide-image-placeholder .subtitle {
+            font-size: 1em;
+            margin-top: 15px;
+            opacity: 0.8;
+        }
+
+        .slide-content {
+            flex: 1;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .slide-title {
+            font-size: 3.5em;
+            font-weight: bold;
+            margin-bottom: 40px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+            line-height: 1.2;
+        }
+
+        .slide-info {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .info-label {
+            font-size: 1.2em;
+            opacity: 0.95;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-size: 2em;
+            font-weight: bold;
+            line-height: 1.3;
+        }
+
+        .slide-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: rgba(102, 126, 234, 0.4);
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid rgba(102, 126, 234, 0.6);
+        }
+
+        .indicator.active {
+            background: #667eea;
+            transform: scale(1.4);
+            border-color: #667eea;
+        }
+
+        .slide-controls {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            font-size: 3em;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .slide-controls:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(-50%) scale(1.15);
+        }
+
+        .prev-btn {
+            left: 30px;
+        }
+
+        .next-btn {
+            right: 30px;
+        }
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 35px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .stat-value {
+            font-size: 4em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .stat-label {
+            font-size: 1.5em;
+            opacity: 0.95;
+            font-weight: 600;
+        }
+
+        .refresh-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 1em;
+            z-index: 1000;
+        }
+
+        @media (max-width: 1400px) {
+            h1 {
+                font-size: 3em;
+            }
+
+            .slide-title {
+                font-size: 2.5em;
+            }
+
+            .info-value {
+                font-size: 1.6em;
+            }
+
+            .stat-value {
+                font-size: 3em;
             }
         }
-    </script>
-    <link rel="stylesheet" href="css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-</head>
-<body class="w-full min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-600 p-2 sm:p-4 md:p-6 lg:px-5 lg:py-4 xl:px-5 xl:py-4 2xl:px-5 2xl:py-4 4k:px-5 4k:py-4">
-    <div class="fixed top-2 right-2 sm:top-4 sm:right-4 bg-black bg-opacity-60 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base z-[1000]" id="refreshIndicator">Carregando dados...</div>
-    
-    <div class="w-full min-h-screen flex flex-col gap-4 sm:gap-6 md:gap-8 lg:gap-6 xl:gap-8" id="mainContainer">
-        <h1 class="text-center text-white text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl 4k:text-9xl font-bold drop-shadow-lg mb-2 sm:mb-4 md:mb-6">Não Conformidades - RNC</h1>
 
-        <!-- Layout: Mobile em coluna, Desktop/TV em 2 colunas -->
-        <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 md:gap-8 flex-1 min-h-0">
-            <!-- LADO ESQUERDO: Visão Geral (Desktop/TV) -->
-            <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-10 shadow-2xl flex flex-col lg:w-1/2 xl:w-2/5 2xl:w-2/5 4k:w-1/3">
-                <h2 class="text-center text-indigo-600 mb-4 sm:mb-6 md:mb-8 text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl 4k:text-6xl font-bold">Visão Geral</h2>
-                <div class="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-2 gap-2 sm:gap-4 md:gap-6 lg:gap-4 xl:gap-6 mb-4 sm:mb-6 md:mb-8">
-                    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-3 sm:p-4 md:p-6 lg:p-4 xl:p-6 2xl:p-8 4k:p-10 rounded-xl sm:rounded-2xl text-center shadow-lg">
-                        <div class="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-4xl xl:text-5xl 2xl:text-6xl 4k:text-7xl font-bold mb-1 sm:mb-2 drop-shadow-md" id="totalObras">0</div>
-                        <div class="text-xs xs:text-sm sm:text-base md:text-lg lg:text-base xl:text-lg 2xl:text-xl 4k:text-2xl opacity-95 font-semibold">Total de RNC</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-3 sm:p-4 md:p-6 lg:p-4 xl:p-6 2xl:p-8 4k:p-10 rounded-xl sm:rounded-2xl text-center shadow-lg">
-                        <div class="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-4xl xl:text-5xl 2xl:text-6xl 4k:text-7xl font-bold mb-1 sm:mb-2 drop-shadow-md" id="totalAbertas">0</div>
-                        <div class="text-xs xs:text-sm sm:text-base md:text-lg lg:text-base xl:text-lg 2xl:text-xl 4k:text-2xl opacity-95 font-semibold">Abertas</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-3 sm:p-4 md:p-6 lg:p-4 xl:p-6 2xl:p-8 4k:p-10 rounded-xl sm:rounded-2xl text-center shadow-lg">
-                        <div class="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-4xl xl:text-5xl 2xl:text-6xl 4k:text-7xl font-bold mb-1 sm:mb-2 drop-shadow-md" id="totalConcluidas">0</div>
-                        <div class="text-xs xs:text-sm sm:text-base md:text-lg lg:text-base xl:text-lg 2xl:text-xl 4k:text-2xl opacity-95 font-semibold">Concluídas</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-3 sm:p-4 md:p-6 lg:p-4 xl:p-6 2xl:p-8 4k:p-10 rounded-xl sm:rounded-2xl text-center shadow-lg">
-                        <div class="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-4xl xl:text-5xl 2xl:text-6xl 4k:text-7xl font-bold mb-1 sm:mb-2 drop-shadow-md" id="mediaPrazo">0</div>
-                        <div class="text-xs xs:text-sm sm:text-base md:text-lg lg:text-base xl:text-lg 2xl:text-xl 4k:text-2xl opacity-95 font-semibold">Prazo Médio (dias)</div>
-                    </div>
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .slide {
+                flex-direction: column;
+                padding: 30px;
+                gap: 30px;
+            }
+
+            .slide-image {
+                width: 100%;
+                height: 300px;
+                min-height: 300px;
+            }
+
+            .slide-title {
+                font-size: 2em;
+                margin-bottom: 25px;
+            }
+
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-overview {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="refresh-indicator" id="refreshIndicator">Carregando dados...</div>
+    
+    <div class="container" id="mainContainer">
+        <div class="loading" id="loadingMessage">Carregando dados do Google Sheets...</div>
+    </div>
+
+    <script>
+        // IDs do Google Sheets
+        const SHEET_ID_EDIT = '1Md5fP17bXGEEmRXlbsTTo68F9ILROsAD9iPisUoNJ6g';
+        const GID = '1443492060';
+        
+        // URLs de exportação - formato correto para Google Sheets
+        const BASE_URL_EXPORT = `https://docs.google.com/spreadsheets/d/${SHEET_ID_EDIT}/export?format=csv&gid=${GID}`;
+        const BASE_URL_EXPORT_NO_GID = `https://docs.google.com/spreadsheets/d/${SHEET_ID_EDIT}/export?format=csv`;
+        
+        // Tentar diferentes formatos de URL (prioridade para export direto)
+        const CSV_URLS = [
+            // Formato de exportação direto (mais confiável)
+            BASE_URL_EXPORT,
+            BASE_URL_EXPORT_NO_GID,
+            // URLs alternativas com diferentes parâmetros
+            `https://docs.google.com/spreadsheets/d/${SHEET_ID_EDIT}/gviz/tq?tqx=out:csv&gid=${GID}`,
+            `https://docs.google.com/spreadsheets/d/${SHEET_ID_EDIT}/gviz/tq?tqx=out:csv`,
+            // Proxies CORS como alternativa
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(BASE_URL_EXPORT)}`,
+            `https://corsproxy.io/?${encodeURIComponent(BASE_URL_EXPORT)}`
+        ];
+        
+        let obras = [];
+        let currentSlide = 0;
+        let slideInterval;
+        let chartAbertura = null;
+        let chartConclusao = null;
+
+        // Função melhorada para converter CSV em array de objetos (suporta vírgulas dentro de campos e cabeçalhos quebrados)
+        function csvToArray(csvText) {
+            if (!csvText || csvText.trim().length === 0) {
+                console.warn('CSV vazio');
+                return [];
+            }
+            
+            const allLines = csvText.split('\n');
+            const lines = allLines.filter(line => line.trim());
+            
+            if (lines.length < 2) {
+                console.warn('CSV tem menos de 2 linhas. Total de linhas:', lines.length);
+                return [];
+            }
+
+            // Função para fazer parse correto de CSV considerando aspas
+            function parseCSVLine(line) {
+                const result = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    
+                    if (char === '"') {
+                        if (inQuotes && line[i + 1] === '"') {
+                            current += '"';
+                            i++; // Pular próxima aspas
+                        } else {
+                            inQuotes = !inQuotes;
+                        }
+                    } else if (char === ',' && !inQuotes) {
+                        result.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                result.push(current.trim());
+                return result;
+            }
+
+            // Detectar onde começa os dados (primeira linha com data DD/MM/YYYY HH:MM:SS)
+            let dataStartIndex = 1;
+            for (let i = 0; i < Math.min(10, lines.length); i++) {
+                if (lines[i].match(/^\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2}/)) {
+                    dataStartIndex = i;
+                    break;
+                }
+            }
+            
+            // Juntar todas as linhas antes dos dados como cabeçalho
+            let headerLine = '';
+            for (let i = 0; i < dataStartIndex; i++) {
+                headerLine += lines[i];
+            }
+            
+            const headers = parseCSVLine(headerLine).map(h => h.replace(/^"|"$/g, '').trim()).filter(h => h);
+            console.log('Cabeçalhos detectados:', headers);
+            console.log('Total de colunas:', headers.length);
+            console.log('Primeira linha de dados na posição:', dataStartIndex);
+            
+            const data = [];
+
+            // Processar linhas de dados
+            let currentLine = '';
+            for (let i = dataStartIndex; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                // Se começa com data/hora, é uma nova linha de dados
+                if (line.match(/^\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2}/)) {
+                    // Processar linha anterior se existir
+                    if (currentLine) {
+                        const values = parseCSVLine(currentLine).map(v => v.replace(/^"|"$/g, '').trim());
+                        if (values.length > 0 && values[0]) {
+                            const obj = {};
+                            headers.forEach((header, index) => {
+                                obj[header] = values[index] || '';
+                            });
+                            data.push(obj);
+                        }
+                    }
+                    currentLine = line;
+                } else {
+                    // Continuação da linha anterior (descrição com quebras de linha)
+                    currentLine += ' ' + line;
+                }
+            }
+            
+            // Processar última linha
+            if (currentLine) {
+                const values = parseCSVLine(currentLine).map(v => v.replace(/^"|"$/g, '').trim());
+                if (values.length > 0 && values[0]) {
+                    const obj = {};
+                    headers.forEach((header, index) => {
+                        obj[header] = values[index] || '';
+                    });
+                    data.push(obj);
+                }
+            }
+
+            console.log('Total de registros parseados:', data.length);
+            return data;
+        }
+
+        // Função para encontrar coluna por padrões de nome
+        function findColumn(row, patterns) {
+            for (const pattern of patterns) {
+                // Busca exata
+                if (row[pattern] !== undefined) {
+                    return row[pattern];
+                }
+                // Busca case-insensitive
+                const key = Object.keys(row).find(k => 
+                    k.toLowerCase().trim() === pattern.toLowerCase().trim()
+                );
+                if (key) return row[key];
+            }
+            return '';
+        }
+
+        // Função para mapear dados do Google Sheets para o formato esperado
+        function mapSheetData(sheetData) {
+            if (sheetData.length === 0) return [];
+            
+            // Log das colunas disponíveis para debug
+            const firstRow = sheetData[0];
+            console.log('Colunas disponíveis:', Object.keys(firstRow));
+            
+            return sheetData.map((row, index) => {
+                // Mapear colunas exatas da planilha
+                const titulo = findColumn(row, [
+                    'Titulo da Não conformidade:',
+                    'Título da Não conformidade:',
+                    'Titulo da Não Conformidade:',
+                    'Título da Não Conformidade:',
+                    'Titulo da Não conformidade',
+                    'Título', 'Titulo', 'OBRA', 'Obra'
+                ]) || '';
+                
+                const origem = findColumn(row, [
+                    'Origem da RNC, inserir apenas JOB.',
+                    'Origem da RNC',
+                    'Origem', 'ORIGEM', 'origem', 'JOB'
+                ]) || 'Não informado';
+                
+                const responsavelApontamento = findColumn(row, [
+                    'Responsável pela emissão do R.N.C.:',
+                    'Responsável pela emissão do RNC:',
+                    'Responsável pela emissão',
+                    'Responsável Apontamento',
+                    'Responsavel Apontamento',
+                    'Emissão', 'Emissor'
+                ]) || 'Não informado';
+                
+                const responsavelPlanoAcao = findColumn(row, [
+                    'Responsável pela resolução do problema:',
+                    'Responsável pela resolução',
+                    'Responsável pela resolução do R.N.C.:',
+                    'Responsável Plano de Ação',
+                    'Responsavel Plano de Acao',
+                    'Resolução', 'Responsável Resolução'
+                ]) || 'Não informado';
+                
+                // Extrair prazo
+                let prazo = 0;
+                const prazoStr = findColumn(row, [
+                    'Prazo para conclusão da R.N.C.:',
+                    'Prazo para conclusão da RNC:',
+                    'Prazo para conclusão',
+                    'Prazo (dias)', 'Prazo (Dias)',
+                    'Prazo', 'PRAZO', 'Dias', 'DIAS'
+                ]);
+                if (prazoStr) {
+                    const prazoMatch = prazoStr.toString().match(/\d+/);
+                    if (prazoMatch) prazo = parseInt(prazoMatch[0]);
+                }
+
+                // Extrair datas
+                const dataAbertura = findColumn(row, [
+                    'Data de emissão:',
+                    'Data de emissão',
+                    'Data Abertura',
+                    'Data de Abertura',
+                    'DATA ABERTURA',
+                    'Emissão', 'Data Emissão'
+                ]) || '';
+                
+                const dataConclusao = findColumn(row, [
+                    'Data Conclusão',
+                    'Data de Conclusão',
+                    'DATA CONCLUSÃO',
+                    'Conclusão', 'Data Fim'
+                ]) || '';
+
+                // Extrair link da imagem - priorizar a coluna "Insira até 3 imagens"
+                let imagemUrl = findColumn(row, [
+                    'Insira até 3 imagens da Não Conformidade:',
+                    'Insira até 3 imagens da Não Conformidade',
+                    'Insira até 3 imagens',
+                    'Imagens da Não Conformidade'
+                ]) || '';
+                
+                // Se não encontrou, tentar a outra coluna
+                if (!imagemUrl) {
+                    imagemUrl = findColumn(row, [
+                        'Link da imagem para site',
+                        'Link da imagem',
+                        'Imagem', 'Link Imagem',
+                        'URL Imagem', 'Imagem URL'
+                    ]) || '';
+                }
+
+                // Se não encontrou título, tentar usar a primeira coluna não vazia
+                let finalTitulo = titulo;
+                if (!finalTitulo || finalTitulo.trim() === '') {
+                    const firstValue = Object.values(row).find(v => v && v.toString().trim());
+                    finalTitulo = firstValue ? firstValue.toString().trim() : `RNC ${index + 1}`;
+                }
+
+                return {
+                    titulo: finalTitulo,
+                    origem: origem,
+                    responsavelApontamento: responsavelApontamento,
+                    responsavelPlanoAcao: responsavelPlanoAcao,
+                    prazo: prazo,
+                    dataAbertura: dataAbertura || new Date().toISOString().split('T')[0],
+                    dataConclusao: dataConclusao || null,
+                    imagemUrl: imagemUrl
+                };
+            }).filter(obra => obra.titulo && obra.titulo.trim() !== '' && obra.titulo !== 'RNC');
+        }
+
+        // Buscar dados do Google Sheets com múltiplas tentativas
+        async function fetchData() {
+            document.getElementById('refreshIndicator').textContent = 'Atualizando dados...';
+            
+            let lastError = null;
+            
+            // Tentar cada URL até uma funcionar
+            for (let i = 0; i < CSV_URLS.length; i++) {
+                const url = CSV_URLS[i];
+                try {
+                    console.log(`Tentativa ${i + 1}/${CSV_URLS.length}:`, url);
+                    document.getElementById('refreshIndicator').textContent = `Tentando carregar... (${i + 1}/${CSV_URLS.length})`;
+                    
+                    let response;
+                    let csvText;
+                    
+                    // Para proxies, pode precisar de tratamento especial
+                    if (url.includes('allorigins.win')) {
+                        response = await fetch(url, {
+                            method: 'GET',
+                            mode: 'cors',
+                            cache: 'no-cache'
+                        });
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        csvText = await response.text();
+                    } else if (url.includes('corsproxy.io')) {
+                        response = await fetch(url, {
+                            method: 'GET',
+                            mode: 'cors',
+                            cache: 'no-cache'
+                        });
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        csvText = await response.text();
+                    } else {
+                        // Para URLs diretas do Google Sheets
+                        response = await fetch(url, {
+                            method: 'GET',
+                            mode: 'cors',
+                            cache: 'no-cache',
+                            credentials: 'omit',
+                            headers: {
+                                'Accept': 'text/csv, text/plain, */*'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            const errorText = await response.text().catch(() => '');
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}. ${errorText.substring(0, 100)}`);
+                        }
+                        
+                        csvText = await response.text();
+                    }
+                    
+                    console.log('CSV recebido, tamanho:', csvText.length);
+                    console.log('Primeiros 500 caracteres do CSV:', csvText.substring(0, 500));
+                    
+                    if (!csvText || csvText.trim().length === 0) {
+                        throw new Error('CSV vazio recebido');
+                    }
+                    
+                    // Verificar se não é uma página de erro HTML
+                    if (csvText.includes('<!DOCTYPE') || csvText.includes('<html')) {
+                        throw new Error('Recebido HTML ao invés de CSV. A planilha pode não estar pública.');
+                    }
+                    
+                    const sheetData = csvToArray(csvText);
+                    console.log('Dados parseados:', sheetData.length, 'linhas');
+                    console.log('Primeira linha de dados:', sheetData[0]);
+                    
+                    if (sheetData.length === 0) {
+                        throw new Error('Nenhum dado encontrado após parsing do CSV');
+                    }
+                    
+                    obras = mapSheetData(sheetData);
+                    console.log('Obras mapeadas:', obras.length);
+                    console.log('Primeira obra:', obras[0]);
+                    
+                    if (obras.length === 0) {
+                        throw new Error('Nenhuma RNC válida encontrada após mapeamento');
+                    }
+
+                    updateUI();
+                    document.getElementById('refreshIndicator').textContent = `Última atualização: ${new Date().toLocaleTimeString('pt-BR')}`;
+                    return; // Sucesso!
+                    
+                } catch (error) {
+                    console.warn('Erro ao tentar URL:', url, error);
+                    lastError = error;
+                    continue; // Tentar próxima URL
+                }
+            }
+            
+            // Se todas as URLs falharam, tentar usar arquivo local como fallback
+            console.warn('Todas as URLs online falharam. Tentando arquivo local...');
+            try {
+                const response = await fetch('dados.csv');
+                if (response.ok) {
+                    const csvText = await response.text();
+                    console.log('Usando dados locais (dados.csv)');
+                    
+                    const sheetData = csvToArray(csvText);
+                    obras = mapSheetData(sheetData);
+                    
+                    if (obras.length > 0) {
+                        updateUI();
+                        document.getElementById('refreshIndicator').textContent = `Dados locais - Última atualização: ${new Date().toLocaleTimeString('pt-BR')}`;
+                        return; // Sucesso com dados locais!
+                    }
+                }
+            } catch (localError) {
+                console.warn('Erro ao carregar arquivo local:', localError);
+            }
+            
+            // Se chegou aqui, todas as tentativas falharam
+            console.error('Todas as tentativas falharam. Último erro:', lastError);
+            document.getElementById('refreshIndicator').textContent = 'Erro ao carregar dados';
+            document.getElementById('loadingMessage').innerHTML = `
+                <div style="color: #ff6b6b; font-size: 1.5em; margin-bottom: 20px;">
+                    Erro ao carregar dados do Google Sheets
                 </div>
-                <div class="grid grid-cols-1 gap-4 sm:gap-6 md:gap-8 lg:gap-4 xl:gap-6 flex-1 min-h-0">
-                    <div class="bg-gray-50 p-4 sm:p-6 md:p-8 lg:p-4 xl:p-6 2xl:p-8 rounded-xl sm:rounded-2xl min-h-[200px] sm:min-h-[250px] md:min-h-[300px] lg:min-h-[250px] xl:min-h-[300px] 2xl:min-h-[350px] 4k:min-h-[400px] flex flex-col">
-                        <div class="text-center text-indigo-600 text-base sm:text-lg md:text-xl lg:text-lg xl:text-xl 2xl:text-2xl 4k:text-3xl font-bold mb-3 sm:mb-4 md:mb-5">Gráfico de Abertura</div>
-                        <div class="flex-1 min-h-0">
-                            <canvas id="aberturaChart"></canvas>
+                <div style="font-size: 1.2em; margin-bottom: 10px;">
+                    Possíveis causas:
+                </div>
+                <ul style="text-align: left; display: inline-block; font-size: 1em; margin-bottom: 20px;">
+                    <li>A planilha não está configurada para acesso público</li>
+                    <li>Problemas de conexão com a internet</li>
+                    <li>Bloqueio de CORS no navegador</li>
+                </ul>
+                <div style="margin-top: 30px; font-size: 1.1em; margin-bottom: 20px;">
+                    <strong>Como resolver:</strong><br>
+                    1. Abra a planilha: <a href="https://docs.google.com/spreadsheets/d/1Md5fP17bXGEEmRXlbsTTo68F9ILROsAD9iPisUoNJ6g/edit?gid=1443492060" target="_blank" style="color: #667eea;">Abrir Planilha</a><br>
+                    2. Clique em "Compartilhar" (canto superior direito)<br>
+                    3. Clique em "Alterar para qualquer pessoa com o link"<br>
+                    4. Defina como "Leitor"<br>
+                    5. Clique em "Concluído"<br>
+                    6. Clique no botão abaixo para tentar novamente<br><br>
+                    <strong>OU</strong> baixe a planilha como CSV e salve como "dados.csv" na mesma pasta do dashboard
+                </div>
+                <button onclick="location.reload()" style="
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border: none;
+                    padding: 15px 40px;
+                    font-size: 1.2em;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                    transition: transform 0.2s;
+                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    Tentar Novamente
+                </button>
+                <div style="margin-top: 20px; font-size: 0.9em; opacity: 0.8;">
+                    Erro técnico: ${lastError?.message || 'Desconhecido'}<br>
+                    <small>Abra o Console do navegador (F12) para mais detalhes</small>
+                </div>
+            `;
+        }
+
+        // Atualizar toda a interface
+        function updateUI() {
+            const container = document.getElementById('mainContainer');
+            container.innerHTML = `
+                <h1>Não Conformidades - RNC</h1>
+
+                <div class="charts-section">
+                    <h2 style="text-align: center; color: #667eea; margin-bottom: 20px; font-size: 2.5em;">Visão Geral</h2>
+                    <div class="stats-overview">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalObras">0</div>
+                            <div class="stat-label">Total de RNC</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalAbertas">0</div>
+                            <div class="stat-label">Abertas</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalConcluidas">0</div>
+                            <div class="stat-label">Concluídas</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="mediaPrazo">0</div>
+                            <div class="stat-label">Prazo Médio (dias)</div>
                         </div>
                     </div>
-                    <div class="bg-gray-50 p-4 sm:p-6 md:p-8 lg:p-4 xl:p-6 2xl:p-8 rounded-xl sm:rounded-2xl min-h-[200px] sm:min-h-[250px] md:min-h-[300px] lg:min-h-[250px] xl:min-h-[300px] 2xl:min-h-[350px] 4k:min-h-[400px] flex flex-col">
-                        <div class="text-center text-indigo-600 text-base sm:text-lg md:text-xl lg:text-lg xl:text-xl 2xl:text-2xl 4k:text-3xl font-bold mb-3 sm:mb-4 md:mb-5">Gráfico de Conclusão</div>
-                        <div class="flex-1 min-h-0">
+                    <div class="charts-container">
+                        <div class="chart-wrapper">
+                            <div class="chart-title">Gráfico de Abertura</div>
+                            <canvas id="aberturaChart"></canvas>
+                        </div>
+                        <div class="chart-wrapper">
+                            <div class="chart-title">Gráfico de Conclusão</div>
                             <canvas id="conclusaoChart"></canvas>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- LADO DIREITO: Detalhes das Obras (Desktop/TV) -->
-            <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-10 shadow-2xl relative overflow-hidden flex-1 lg:w-1/2 xl:w-3/5 2xl:w-3/5 4k:w-2/3 min-h-0 flex flex-col">
-                <h2 class="text-center text-indigo-600 mb-4 sm:mb-6 md:mb-8 text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl 4k:text-6xl font-bold">Detalhes das Não Conformidades</h2>
-                <div class="relative flex-1 min-h-[300px] xs:min-h-[400px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-0 overflow-hidden" id="slidesContainer">
-                    <!-- Slides serão inseridos via JavaScript -->
+                <div class="slides-section">
+                    <h2 style="text-align: center; color: #667eea; margin-bottom: 30px; font-size: 2.5em;">Detalhes das Não Conformidades</h2>
+                    <div class="slides-container" id="slidesContainer">
+                        <!-- Slides serão inseridos via JavaScript -->
+                    </div>
+                    <button class="slide-controls prev-btn" onclick="previousSlide()">‹</button>
+                    <button class="slide-controls next-btn" onclick="nextSlide()">›</button>
+                    <div class="slide-indicators" id="indicators">
+                        <!-- Indicadores serão inseridos via JavaScript -->
+                    </div>
                 </div>
-                <button class="absolute top-1/2 -translate-y-1/2 left-4 sm:left-6 md:left-8 bg-white bg-opacity-25 backdrop-blur-md border-2 border-white border-opacity-40 text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl 4k:text-8xl w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 xl:w-24 xl:h-24 2xl:w-28 2xl:h-28 4k:w-36 4k:h-36 rounded-full cursor-pointer transition-all duration-300 z-10 flex items-center justify-center font-bold hover:bg-opacity-35 hover:scale-110 active:scale-95" onclick="previousSlide()">‹</button>
-                <button class="absolute top-1/2 -translate-y-1/2 right-4 sm:right-6 md:right-8 bg-white bg-opacity-25 backdrop-blur-md border-2 border-white border-opacity-40 text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl 4k:text-8xl w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 xl:w-24 xl:h-24 2xl:w-28 2xl:h-28 4k:w-36 4k:h-36 rounded-full cursor-pointer transition-all duration-300 z-10 flex items-center justify-center font-bold hover:bg-opacity-35 hover:scale-110 active:scale-95" onclick="nextSlide()">›</button>
-                <div class="flex justify-center gap-2 sm:gap-3 md:gap-4 mt-4 sm:mt-6 md:mt-8" id="indicators">
-                    <!-- Indicadores serão inseridos via JavaScript -->
-                </div>
-            </div>
-        </div>
-    </div>
+            `;
 
-    <!-- Módulos JavaScript (ordem de dependência) -->
-    <script src="js/csvParser.js"></script>
-    <script src="js/dataMapper.js"></script>
-    <script src="js/imageHandler.js"></script>
-    <script src="js/dataFetcher.js"></script>
-    <script src="js/statsCalculator.js"></script>
-    <script src="js/chartsManager.js"></script>
-    <script src="js/slidesManager.js"></script>
-    <script src="js/app.js"></script>
+            initSlides();
+            initCharts();
+            updateStats();
+            resetInterval();
+        }
 
-    <!-- Inicialização da aplicação -->
-    <script>
-        // Configuração da aplicação
-        const CONFIG = {
-            sheetId: '1Md5fP17bXGEEmRXlbsTTo68F9ILROsAD9iPisUoNJ6g',
-            gid: '1443492060'
-        };
+        // Inicializar slides
+        function initSlides() {
+            const container = document.getElementById('slidesContainer');
+            const indicators = document.getElementById('indicators');
+            
+            container.innerHTML = '';
+            indicators.innerHTML = '';
+            
+            obras.forEach((obra, index) => {
+                // Converter URL do Google Drive para formato de visualização direta
+                let imagemSrc = '';
+                if (obra.imagemUrl) {
+                    let url = obra.imagemUrl.trim();
+                    
+                    // Se tem múltiplas URLs separadas por vírgula ou espaço, pegar a primeira
+                    if (url.includes(',')) {
+                        url = url.split(',')[0].trim();
+                    }
+                    
+                    // Extrair ID do arquivo de diferentes formatos
+                    let fileId = null;
+                    
+                    // Tentar extrair ID de diferentes formatos de URL do Google Drive
+                    // Formato: https://drive.google.com/open?id=FILE_ID
+                    const matchOpen = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                    // Formato: https://drive.google.com/file/d/FILE_ID/view ou /d/FILE_ID/
+                    const matchFile = url.match(/\/[df]+\/([a-zA-Z0-9_-]+)/);
+                    // Formato: drive.usercontent.google.com/download?id=FILE_ID
+                    const matchDownload = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                    
+                    // Priorizar match mais específico
+                    if (matchFile) {
+                        fileId = matchFile[1];
+                    } else if (matchOpen) {
+                        fileId = matchOpen[1];
+                    } else if (matchDownload) {
+                        fileId = matchDownload[1];
+                    }
+                    // Se parece ser apenas um ID (sem http)
+                    else if (url.length > 20 && url.length < 50 && !url.includes('http') && !url.includes('://')) {
+                        fileId = url.trim();
+                    }
+                    
+                    // Se encontrou o ID, criar URL de visualização usando múltiplos formatos
+                    if (fileId) {
+                        // Limpar o ID (remover caracteres inválidos)
+                        fileId = fileId.replace(/[^a-zA-Z0-9_-]/g, '');
+                        
+                        // Armazenar o ID para usar no iframe se a imagem direta falhar
+                        obra.fileId = fileId;
+                        
+                        // Tentar múltiplos formatos (alguns podem funcionar dependendo das permissões)
+                        // Ordem de prioridade: formatos que funcionam com imagens públicas
+                        imagemSrc = `https://drive.google.com/uc?export=view&id=${fileId}`;
+                        console.log(`Imagem ${index + 1}: ID extraído=${fileId}, URL gerada=${imagemSrc}`);
+                    } else {
+                        // Se a URL já está no formato correto, usar diretamente
+                        if (url.includes('drive.usercontent.google.com')) {
+                            imagemSrc = url;
+                            console.log(`Imagem ${index + 1}: URL já está no formato correto=${url}`);
+                        } else {
+                            // Tentar usar a URL original
+                            imagemSrc = url;
+                            console.warn(`Imagem ${index + 1}: Não foi possível extrair ID da URL=${url}`);
+                        }
+                    }
+                }
 
-        // Inicializar aplicação quando o DOM estiver pronto
+                // Criar slide
+                const slide = document.createElement('div');
+                slide.className = `slide ${index === 0 ? 'active' : ''}`;
+                slide.innerHTML = `
+                    <div class="slide-image">
+                        ${imagemSrc ? `
+                            <img src="${imagemSrc}" 
+                                 alt="${obra.titulo}" 
+                                 style="width: 100%; height: 100%; object-fit: cover;"
+                                 id="img-${index}"
+                                 onerror="
+                                    console.error('Erro ao carregar imagem direta:', '${imagemSrc}');
+                                    this.style.display='none';
+                                    const container = this.parentElement;
+                                    const fileId = '${obra.fileId || ''}';
+                                    
+                                    // Tentar usar iframe como fallback se tiver fileId
+                                    if (fileId) {
+                                        console.log('Tentando iframe como fallback para:', fileId);
+                                        const iframe = document.createElement('iframe');
+                                        iframe.src = 'https://drive.google.com/file/d/' + fileId + '/preview';
+                                        iframe.style.width = '100%';
+                                        iframe.style.height = '100%';
+                                        iframe.style.border = 'none';
+                                        iframe.style.borderRadius = '15px';
+                                        iframe.allow = 'autoplay';
+                                        container.appendChild(iframe);
+                                    } else {
+                                        // Mostrar placeholder se não tiver fileId
+                                        const placeholder = document.createElement('div');
+                                        placeholder.className = 'slide-image-placeholder';
+                                        placeholder.innerHTML = '<div><svg width=\\'150\\' height=\\'150\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\' stroke-linecap=\\'round\\' stroke-linejoin=\\'round\\'><rect x=\\'3\\' y=\\'3\\' width=\\'18\\' height=\\'18\\' rx=\\'2\\' ry=\\'2\\'></rect><circle cx=\\'8.5\\' cy=\\'8.5\\' r=\\'1.5\\'></circle><polyline points=\\'21 15 16 10 5 21\\'></polyline></svg><div>Imagem não disponível</div><div style=\\'font-size: 0.8em; margin-top: 10px; opacity: 0.7;\\'>Arquivo precisa estar público no Drive</div><div style=\\'font-size: 0.7em; margin-top: 5px; opacity: 0.6;\\'>Ou faça login no Google</div><div class=\\'subtitle\\'>${obra.titulo}</div></div>';
+                                        container.appendChild(placeholder);
+                                    }
+                                 "
+                                 onload="console.log('Imagem carregada com sucesso:', '${imagemSrc}')">
+                            <div class="slide-image-placeholder" style="display: none;">
+                                <div>
+                                    <svg width="150" height="150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                        <polyline points="21 15 16 10 5 21"></polyline>
+                                    </svg>
+                                    <div>Carregando imagem...</div>
+                                    <div class="subtitle">${obra.titulo}</div>
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="slide-image-placeholder">
+                                <div>
+                                    <svg width="150" height="150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                        <polyline points="21 15 16 10 5 21"></polyline>
+                                    </svg>
+                                    <div>Imagem da Não Conformidade</div>
+                                    <div class="subtitle">${obra.titulo}</div>
+                                </div>
+                            </div>
+                        `}
+                    </div>
+                    <div class="slide-content">
+                        <div class="slide-title">${obra.titulo}</div>
+                        <div class="slide-info">
+                            <div class="info-item">
+                                <div class="info-label">Origem (JOB)</div>
+                                <div class="info-value">${obra.origem}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Responsável Emissão</div>
+                                <div class="info-value">${obra.responsavelApontamento}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Responsável Resolução</div>
+                                <div class="info-value">${obra.responsavelPlanoAcao}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Prazo (dias)</div>
+                                <div class="info-value">${obra.prazo} dias</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(slide);
+
+                // Criar indicador
+                const indicator = document.createElement('div');
+                indicator.className = `indicator ${index === 0 ? 'active' : ''}`;
+                indicator.onclick = () => goToSlide(index);
+                indicators.appendChild(indicator);
+            });
+        }
+
+        // Navegar para slide específico
+        function goToSlide(index) {
+            if (obras.length === 0) return;
+            
+            const slides = document.querySelectorAll('.slide');
+            const indicators = document.querySelectorAll('.indicator');
+            
+            if (slides[currentSlide]) {
+                slides[currentSlide].classList.remove('active');
+            }
+            if (indicators[currentSlide]) {
+                indicators[currentSlide].classList.remove('active');
+            }
+            
+            currentSlide = index % obras.length;
+            
+            if (slides[currentSlide]) {
+                slides[currentSlide].classList.add('active');
+            }
+            if (indicators[currentSlide]) {
+                indicators[currentSlide].classList.add('active');
+            }
+            
+            resetInterval();
+        }
+
+        // Próximo slide
+        function nextSlide() {
+            if (obras.length === 0) return;
+            const next = (currentSlide + 1) % obras.length;
+            goToSlide(next);
+        }
+
+        // Slide anterior
+        function previousSlide() {
+            if (obras.length === 0) return;
+            const prev = (currentSlide - 1 + obras.length) % obras.length;
+            goToSlide(prev);
+        }
+
+        // Reiniciar intervalo automático
+        function resetInterval() {
+            clearInterval(slideInterval);
+            if (obras.length > 0) {
+                slideInterval = setInterval(nextSlide, 8000); // Muda a cada 8 segundos
+            }
+        }
+
+        // Inicializar gráficos
+        function initCharts() {
+            // Destruir gráficos existentes
+            if (chartAbertura) chartAbertura.destroy();
+            if (chartConclusao) chartConclusao.destroy();
+
+            // Preparar dados para gráficos
+            const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            const aberturas = new Array(12).fill(0);
+            const conclusoes = new Array(12).fill(0);
+
+            obras.forEach(obra => {
+                if (obra.dataAbertura) {
+                    try {
+                        const dataAbertura = new Date(obra.dataAbertura);
+                        if (!isNaN(dataAbertura.getTime())) {
+                            const mesAbertura = dataAbertura.getMonth();
+                            if (mesAbertura >= 0 && mesAbertura < 12) {
+                                aberturas[mesAbertura]++;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Data de abertura inválida:', obra.dataAbertura);
+                    }
+                }
+                
+                if (obra.dataConclusao) {
+                    try {
+                        const dataConclusao = new Date(obra.dataConclusao);
+                        if (!isNaN(dataConclusao.getTime())) {
+                            const mesConclusao = dataConclusao.getMonth();
+                            if (mesConclusao >= 0 && mesConclusao < 12) {
+                                conclusoes[mesConclusao]++;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Data de conclusão inválida:', obra.dataConclusao);
+                    }
+                }
+            });
+
+            // Gráfico de Abertura
+            const ctxAbertura = document.getElementById('aberturaChart');
+            if (ctxAbertura) {
+                chartAbertura = new Chart(ctxAbertura, {
+                    type: 'bar',
+                    data: {
+                        labels: meses,
+                        datasets: [{
+                            label: 'Obras Abertas',
+                            data: aberturas,
+                            backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                            borderColor: 'rgba(102, 126, 234, 1)',
+                            borderWidth: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 16
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1,
+                                    font: {
+                                        size: 14
+                                    }
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    font: {
+                                        size: 14
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Gráfico de Conclusão
+            const ctxConclusao = document.getElementById('conclusaoChart');
+            if (ctxConclusao) {
+                chartConclusao = new Chart(ctxConclusao, {
+                    type: 'line',
+                    data: {
+                        labels: meses,
+                        datasets: [{
+                            label: 'Obras Concluídas',
+                            data: conclusoes,
+                            backgroundColor: 'rgba(118, 75, 162, 0.2)',
+                            borderColor: 'rgba(118, 75, 162, 1)',
+                            borderWidth: 4,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 16
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1,
+                                    font: {
+                                        size: 14
+                                    }
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    font: {
+                                        size: 14
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Atualizar estatísticas
+        function updateStats() {
+            const totalObras = obras.length;
+            const totalAbertas = obras.filter(o => !o.dataConclusao || o.dataConclusao === '').length;
+            const totalConcluidas = obras.filter(o => o.dataConclusao && o.dataConclusao !== '').length;
+            const obrasComPrazo = obras.filter(o => o.prazo > 0);
+            const mediaPrazo = obrasComPrazo.length > 0 
+                ? Math.round(obrasComPrazo.reduce((sum, o) => sum + o.prazo, 0) / obrasComPrazo.length)
+                : 0;
+
+            document.getElementById('totalObras').textContent = totalObras;
+            document.getElementById('totalAbertas').textContent = totalAbertas;
+            document.getElementById('totalConcluidas').textContent = totalConcluidas;
+            document.getElementById('mediaPrazo').textContent = mediaPrazo;
+        }
+
+        // Carregar dados locais primeiro (mais rápido e confiável)
+        async function loadLocalData() {
+            try {
+                const response = await fetch('dados.csv');
+                if (response.ok) {
+                    const csvText = await response.text();
+                    console.log('Carregando dados locais (dados.csv)');
+                    
+                    const sheetData = csvToArray(csvText);
+                    obras = mapSheetData(sheetData);
+                    
+                    if (obras.length > 0) {
+                        updateUI();
+                        document.getElementById('refreshIndicator').textContent = `Dados locais carregados - ${new Date().toLocaleTimeString('pt-BR')}`;
+                        return true;
+                    }
+                }
+            } catch (error) {
+                console.warn('Erro ao carregar arquivo local:', error);
+            }
+            return false;
+        }
+
+        // Inicializar tudo quando a página carregar
         window.addEventListener('DOMContentLoaded', async () => {
-            const app = new App(CONFIG);
-            await app.init();
+            // Tentar carregar dados locais primeiro
+            const localLoaded = await loadLocalData();
+            
+            // Se não conseguiu carregar local, tentar online
+            if (!localLoaded) {
+                await fetchData();
+            }
+            
+            // Atualizar dados a cada 5 minutos (tentar online para pegar atualizações)
+            setInterval(async () => {
+                const onlineSuccess = await fetchData();
+                // Se online falhar, manter dados locais
+            }, 5 * 60 * 1000);
+        });
+
+        // Suporte para fullscreen (F11)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F11') {
+                e.preventDefault();
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
         });
     </script>
 </body>
